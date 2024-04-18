@@ -23,17 +23,17 @@ def parse_bullets(sentence):
     return bullets
 
 
-def generate_answer(answer_context, temperature=0.7):
+def generate_answer(answer_context, temperature, modelstring):
     try:
         completion = openai.ChatCompletion.create(
                   temperature=temperature,
-                  model="gpt-3.5-turbo-0301",
+                  model=modelstring,
                   messages=answer_context,
                   n=1)
     except:
         print("retrying due to an error......")
         time.sleep(20)
-        return generate_answer(answer_context)
+        return generate_answer(answer_context, temperature, modelstring)
 
     return completion
 
@@ -97,8 +97,10 @@ if __name__ == "__main__":
 
     assert(len(temperature) == agents)
 
+    modelstring = "gpt-3.5-turbo-0125"
 
-    evaluation_round = 100
+
+    evaluation_round = 1
     scores = []
 
     generated_description = {}
@@ -124,7 +126,7 @@ if __name__ == "__main__":
 
                     print("message: ", message)
 
-                completion = generate_answer(agent_context, temperature[i])
+                completion = generate_answer(agent_context, temperature[i], modelstring)
 
                 assistant_message = construct_assistant_message(completion)
                 agent_context.append(assistant_message)
@@ -166,7 +168,7 @@ if __name__ == "__main__":
     #pickle.dump(generated_description, open(("math_agents{}_rounds{}".format(agents, rounds))+agent_temperature_string+".p", "wb"))
 
     foldername = "results"
-    filename = f"{foldername}/agents{agents}_rounds{rounds}_temperature{agent_temperature_string}_evaluationRound{evaluation_round}"
+    filename = f"{foldername}/agents{agents}_rounds{rounds}_temperature{agent_temperature_string}_evaluationRound_{evaluation_round}_model_{modelstring}"
     with open(filename + ".json", "w") as json_file:
         json.dump(generated_description, json_file, indent=4)
     with open(filename + ".txt", "w") as txt_file:
