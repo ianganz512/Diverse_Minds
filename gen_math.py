@@ -91,7 +91,8 @@ if __name__ == "__main__":
     rounds = 2
     np.random.seed(0)
 
-    temperature = [0.4,0.7,1]
+    temperature = [0.6,0.7,0.8]
+    #temperature = [0.4,0.7,1]
     #temperature = [0.7,0.7,0.7]
 
     assert(len(temperature) == agents)
@@ -165,7 +166,7 @@ if __name__ == "__main__":
     #pickle.dump(generated_description, open(("math_agents{}_rounds{}".format(agents, rounds))+agent_temperature_string+".p", "wb"))
 
     foldername = "results"
-    filename = f"{foldername}/agents{agents}_rounds{rounds}_temperature{agent_temperature_string}"
+    filename = f"{foldername}/agents{agents}_rounds{rounds}_temperature{agent_temperature_string}_evaluationRound{evaluation_round}"
     with open(filename + ".json", "w") as json_file:
         json.dump(generated_description, json_file, indent=4)
     with open(filename + ".txt", "w") as txt_file:
