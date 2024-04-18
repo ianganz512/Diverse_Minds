@@ -23,17 +23,17 @@ def parse_bullets(sentence):
     return bullets
 
 
-def generate_answer(answer_context, temperature=0.7):
+def generate_answer(answer_context, temperature, modelstring):
     try:
         completion = openai.ChatCompletion.create(
                   temperature=temperature,
-                  model="gpt-3.5-turbo-0301",
+                  model=modelstring,
                   messages=answer_context,
                   n=1)
     except:
         print("retrying due to an error......")
         time.sleep(20)
-        return generate_answer(answer_context)
+        return generate_answer(answer_context, temperature, modelstring)
 
     return completion
 
@@ -89,83 +89,84 @@ if __name__ == "__main__":
 
     agents = 3
     rounds = 2
-    np.random.seed(0)
 
     temperature_sets = [[0.4, 0.7, 1], [0.5, 0.7, 0.9], [0.6, 0.7, 0.8], [0.7, 0.7, 0.7]]
 
-    evaluation_round = 100
+    modelstring = "gpt-3.5-turbo"
+
+    evaluation_round = 1
     scores = []
 
     generated_description = {}
 
-    np.random.seed(42)
+    for temperature in temperature_sets:
+        np.random.seed(42)
+        for round in tqdm(range(evaluation_round)):
+            a, b, c, d, e, f = np.random.randint(0, 30, size=6)
 
-    for round in tqdm(range(evaluation_round)):
-        a, b, c, d, e, f = np.random.randint(0, 30, size=6)
+            answer = a + b * c + d - e * f
+            agent_contexts = [[{"role": "user", "content": """What is the result of {}+{}*{}+{}-{}*{}? Make sure to state your answer at the end of the response.""".format(a, b, c, d, e, f)}] for agent in range(agents)]
 
-        answer = a + b * c + d - e * f
-        agent_contexts = [[{"role": "user", "content": """What is the result of {}+{}*{}+{}-{}*{}? Make sure to state your answer at the end of the response.""".format(a, b, c, d, e, f)}] for agent in range(agents)]
+            content = agent_contexts[0][0]['content']
+            question_prompt = "We seek to find the result of {}+{}*{}+{}-{}*{}?".format(a, b, c, d, e, f)
 
-        content = agent_contexts[0][0]['content']
-        question_prompt = "We seek to find the result of {}+{}*{}+{}-{}*{}?".format(a, b, c, d, e, f)
+            for round in range(rounds):
+                for i, agent_context in enumerate(agent_contexts):
 
-        for round in range(rounds):
-            for i, agent_context in enumerate(agent_contexts):
+                    if round != 0:
+                        agent_contexts_other = agent_contexts[:i] + agent_contexts[i+1:]
+                        message = construct_message(agent_contexts_other, question_prompt, 2*round - 1)
+                        agent_context.append(message)
 
-                if round != 0:
-                    agent_contexts_other = agent_contexts[:i] + agent_contexts[i+1:]
-                    message = construct_message(agent_contexts_other, question_prompt, 2*round - 1)
-                    agent_context.append(message)
+                        print("message: ", message)
 
-                    print("message: ", message)
+                    completion = generate_answer(agent_context, temperature[i], modelstring)
 
-                completion = generate_answer(agent_context, temperature[i])
+                    assistant_message = construct_assistant_message(completion)
+                    agent_context.append(assistant_message)
+                    print(completion)
 
-                assistant_message = construct_assistant_message(completion)
-                agent_context.append(assistant_message)
-                print(completion)
+            text_answers = []
 
-        text_answers = []
+            for agent_context in agent_contexts:
+                text_answer = string =  agent_context[-1]['content']
+                text_answer = text_answer.replace(",", ".")
+                text_answer = parse_answer(text_answer)
 
-        for agent_context in agent_contexts:
-            text_answer = string =  agent_context[-1]['content']
-            text_answer = text_answer.replace(",", ".")
-            text_answer = parse_answer(text_answer)
+                if text_answer is None:
+                    continue
 
-            if text_answer is None:
+                text_answers.append(text_answer)
+
+            score = -1
+
+            try:
+                text_answer = most_frequent(text_answers)
+                if text_answer == answer:
+                    scores.append(1)
+                    score = 1
+                else:
+                    scores.append(0)
+                    score = 0
+                generated_description[f"{a} + {b} * {c} + {d} - {e} * {f}"] = (agent_contexts, str(answer), score)
+            except:
+                generated_description[f"{a} + {b} * {c} + {d} - {e} * {f}"] = (agent_contexts, str(answer), score)
                 continue
 
-            text_answers.append(text_answer)
 
-        score = -1
+            print("performance:", np.mean(scores), np.std(scores) / (len(scores) ** 0.5))
 
-        try:
-            text_answer = most_frequent(text_answers)
-            if text_answer == answer:
-                scores.append(1)
-                score = 1
-            else:
-                scores.append(0)
-                score = 0
-            generated_description[f"{a} + {b} * {c} + {d} - {e} * {f}"] = (agent_contexts, str(answer), score)
-        except:
-            generated_description[f"{a} + {b} * {c} + {d} - {e} * {f}"] = (agent_contexts, str(answer), score)
-            continue
+        agent_temperature_string = "_temperature"
+        for temp in temperature:
+            agent_temperature_string += "_" + str(temp)
+        #pickle.dump(generated_description, open(("math_agents{}_rounds{}".format(agents, rounds))+agent_temperature_string+".p", "wb"))
 
-
-        print("performance:", np.mean(scores), np.std(scores) / (len(scores) ** 0.5))
-
-    agent_temperature_string = "_temperature"
-    for temp in temperature:
-        agent_temperature_string += "_" + str(temp)
-    #pickle.dump(generated_description, open(("math_agents{}_rounds{}".format(agents, rounds))+agent_temperature_string+".p", "wb"))
-
-    foldername = "results"
-    filename = f"{foldername}/agents{agents}_rounds{rounds}_temperature{agent_temperature_string}"
-    with open(filename + ".json", "w") as json_file:
-        json.dump(generated_description, json_file, indent=4)
-    with open(filename + ".txt", "w") as txt_file:
-        txt_file.write("performance:" + str(np.mean(scores)) + " " + str( np.std(scores) / (len(scores) ** 0.5)))
+        foldername = "new_results"
+        filename = f"{foldername}/agents{agents}_rounds{rounds}_temperature{agent_temperature_string}_evaluationRound_{evaluation_round}_model_{modelstring}"
+        with open(filename + ".json", "w") as json_file:
+            json.dump(generated_description, json_file, indent=4)
+        with open(filename + ".txt", "w") as txt_file:
+            txt_file.write("performance:" + str(np.mean(scores)) + " " + str( np.std(scores) / (len(scores) ** 0.5)))
 
 
 
