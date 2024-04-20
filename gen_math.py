@@ -98,7 +98,7 @@ if __name__ == "__main__":
     evaluation_round = 100
 
     for temperature in temperature_sets:
-        scores = []
+        scores = [] 
         generated_description = {}
         np.random.seed(42)
         for round in tqdm(range(evaluation_round)):
