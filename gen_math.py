@@ -96,11 +96,10 @@ if __name__ == "__main__":
     modelstring = "gpt-3.5-turbo"
 
     evaluation_round = 100
-    scores = []
-
-    generated_description = {}
 
     for temperature in temperature_sets:
+        scores = []
+        generated_description = {}
         np.random.seed(42)
         for round in tqdm(range(evaluation_round)):
             a, b, c, d, e, f = np.random.randint(0, 30, size=6)
