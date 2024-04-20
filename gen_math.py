@@ -29,9 +29,10 @@ def generate_answer(answer_context, temperature, modelstring):
                   temperature=temperature,
                   model=modelstring,
                   messages=answer_context,
+                  max_tokens=500,
                   n=1)
-    except:
-        print("retrying due to an error......")
+    except Exception as e:
+        print(f"{e}")
         time.sleep(20)
         return generate_answer(answer_context, temperature, modelstring)
 
@@ -94,7 +95,7 @@ if __name__ == "__main__":
 
     modelstring = "gpt-3.5-turbo"
 
-    evaluation_round = 1
+    evaluation_round = 100
     scores = []
 
     generated_description = {}
@@ -152,7 +153,6 @@ if __name__ == "__main__":
             except:
                 generated_description[f"{a} + {b} * {c} + {d} - {e} * {f}"] = (agent_contexts, str(answer), score)
                 continue
-
 
             print("performance:", np.mean(scores), np.std(scores) / (len(scores) ** 0.5))
 
