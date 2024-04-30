@@ -31,12 +31,13 @@ def read_jsonl(path: str):
 if __name__ == "__main__":
     agents = 3
     rounds = 2
-    num_of_questions = 100
+    num_of_questions = 10
     random.seed(42)
 
     generated_description = {}
 
-    questions = read_jsonl("/data/vision/billf/scratch/yilundu/llm_iterative_debate/grade-school-math/grade_school_math/data/test.jsonl")
+    # change the path here if not working
+    questions = read_jsonl("./gsm/data/test.jsonl")
     random.shuffle(questions)
 
     for data in questions[:num_of_questions]:
@@ -63,9 +64,9 @@ if __name__ == "__main__":
 
         generated_description[question] = (agent_contexts, answer)
 
-    json.dump(generated_description, open("gsm_{}_{}.json".format(agents, rounds), "w"))
+    json.dump(generated_description, open("gsm_{}_{}.json".format(agents, rounds), "w"), indent=4)
 
-    import pdb
-    pdb.set_trace()
-    print(answer)
-    print(agent_context)
+    # import pdb
+    # pdb.set_trace()
+    # print(answer)
+    # print(agent_context)
