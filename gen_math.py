@@ -4,6 +4,7 @@ import numpy as np
 import time
 import pickle
 from tqdm import tqdm
+import os
 
 def parse_bullets(sentence):
     bullets_preprocess = sentence.split("\n")
@@ -88,14 +89,15 @@ def most_frequent(List):
 if __name__ == "__main__":
     answer = parse_answer("My answer is the same as the other agents and AI language model: the result of 12+28*19+6 is 550.")
 
-    agents = 3
+    agents = 1
     rounds = 2
 
-    temperature_sets = [[0.4, 0.7, 1], [0.5, 0.7, 0.9], [0.6, 0.7, 0.8], [0.7, 0.7, 0.7]]
+    # temperature_sets = [[0.4, 0.7, 1], [0.5, 0.7, 0.9], [0.6, 0.7, 0.8], [0.7, 0.7, 0.7]]
+    temperature_sets = [[0.7]]
 
     modelstring = "gpt-3.5-turbo"
 
-    evaluation_round = 100
+    evaluation_round = 1000
 
     for temperature in temperature_sets:
         scores = [] 
@@ -160,7 +162,10 @@ if __name__ == "__main__":
             agent_temperature_string += "_" + str(temp)
         #pickle.dump(generated_description, open(("math_agents{}_rounds{}".format(agents, rounds))+agent_temperature_string+".p", "wb"))
 
-        foldername = "new_results"
+        foldername = f"{evaluation_round}_examples"
+        # create the folder if it does not exist
+        if not os.path.exists(foldername):
+            os.makedirs(foldername)
         filename = f"{foldername}/agents{agents}_rounds{rounds}_temperature{agent_temperature_string}_evaluationRound_{evaluation_round}_model_{modelstring}"
         with open(filename + ".json", "w") as json_file:
             json.dump(generated_description, json_file, indent=4)
