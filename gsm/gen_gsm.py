@@ -2,6 +2,7 @@ import openai
 import json
 import numpy as np
 import random
+from tqdm import tqdm
 
 def construct_message(agents, question, idx):
     if len(agents) == 0:
@@ -31,9 +32,9 @@ def read_jsonl(path: str):
 if __name__ == "__main__":
     agents = 3
     rounds = 2
-    num_of_questions = 100
-    temperatures = [[0.7,0.7,0.7],[0.6,0.7,0.8],[0.5,0.7,0.9],[0.4,0.7,1]]
-
+    num_of_questions = 10
+    # temperatures = [[0.7,0.7,0.7],[0.6,0.7,0.8],[0.5,0.7,0.9],[0.4,0.7,1]]
+    temperatures = [[0.7,0.7,0.7]]
     for temperature in temperatures:
 
         questions = read_jsonl("data/test.jsonl")
@@ -41,7 +42,7 @@ if __name__ == "__main__":
         generated_description = {}
         random.shuffle(questions)
 
-        for data in questions[:num_of_questions]:
+        for data in tqdm(questions[:num_of_questions]):
             question = data['question']
             answer = data['answer']
 
@@ -62,10 +63,11 @@ if __name__ == "__main__":
                               n=1)
 
                     assistant_message = construct_assistant_message(completion)
+                    print(assistant_message)
                     agent_context.append(assistant_message)
 
             generated_description[question] = (agent_contexts, answer)
-        json.dump(generated_description, open("gsm_{}_{}_{}.json".format(agents, rounds, str(temperature)), "w"))
+        json.dump(generated_description, open("gsm_{}_{}_{}.json".format(agents, rounds, str(temperature)), "w"), indent=4)
 
     # import pdb
     # pdb.set_trace()
