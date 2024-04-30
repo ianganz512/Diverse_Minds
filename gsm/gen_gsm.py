@@ -31,40 +31,41 @@ def read_jsonl(path: str):
 if __name__ == "__main__":
     agents = 3
     rounds = 2
-    num_of_questions = 10
-    random.seed(42)
+    num_of_questions = 100
+    temperatures = [[0.7,0.7,0.7],[0.6,0.7,0.8],[0.5,0.7,0.9],[0.4,0.7,1]]
 
-    generated_description = {}
+    for temperature in temperatures:
 
-    # change the path here if not working
-    questions = read_jsonl("./gsm/data/test.jsonl")
-    random.shuffle(questions)
+        questions = read_jsonl("data/test.jsonl")
+        random.seed(42)
+        generated_description = {}
+        random.shuffle(questions)
 
-    for data in questions[:num_of_questions]:
-        question = data['question']
-        answer = data['answer']
+        for data in questions[:num_of_questions]:
+            question = data['question']
+            answer = data['answer']
 
-        agent_contexts = [[{"role": "user", "content": """Can you solve the following math problem? {} Explain your reasoning. Your final answer should be a single numerical number, in the form \\boxed{{answer}}, at the end of your response. """.format(question)}] for agent in range(agents)]
+            agent_contexts = [[{"role": "user", "content": """Can you solve the following math problem? {} Explain your reasoning. Your final answer should be a single numerical number, in the form \\boxed{{answer}}, at the end of your response. """.format(question)}] for agent in range(agents)]
 
-        for round in range(rounds):
-            for i, agent_context in enumerate(agent_contexts):
+            for round in range(rounds):
+                for i, agent_context in enumerate(agent_contexts):
 
-                if round != 0:
-                    agent_contexts_other = agent_contexts[:i] + agent_contexts[i+1:]
-                    message = construct_message(agent_contexts_other, question, 2*round - 1)
-                    agent_context.append(message)
+                    if round != 0:
+                        agent_contexts_other = agent_contexts[:i] + agent_contexts[i+1:]
+                        message = construct_message(agent_contexts_other, question, 2*round - 1)
+                        agent_context.append(message)
 
-                completion = openai.ChatCompletion.create(
-                          model="gpt-3.5-turbo",
-                          messages=agent_context,
-                          n=1)
+                    completion = openai.ChatCompletion.create(
+                              model="gpt-3.5-turbo",
+                              messages=agent_context,
+                              temperature = temperature[i],
+                              n=1)
 
-                assistant_message = construct_assistant_message(completion)
-                agent_context.append(assistant_message)
+                    assistant_message = construct_assistant_message(completion)
+                    agent_context.append(assistant_message)
 
-        generated_description[question] = (agent_contexts, answer)
-
-    json.dump(generated_description, open("gsm_{}_{}.json".format(agents, rounds), "w"), indent=4)
+            generated_description[question] = (agent_contexts, answer)
+        json.dump(generated_description, open("gsm_{}_{}_{}.json".format(agents, rounds, str(temperature)), "w"))
 
     # import pdb
     # pdb.set_trace()
