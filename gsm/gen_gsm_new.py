@@ -4,6 +4,7 @@ import numpy as np
 import random
 from tqdm import tqdm
 import argparse
+import time
 
 def construct_message(agents, question, idx):
     if len(agents) == 0:
@@ -63,11 +64,23 @@ if __name__ == "__main__":
                     message = construct_message(agent_contexts_other, question, 2*round - 1)
                     agent_context.append(message)
 
-                completion = openai.ChatCompletion.create(
+                completion = ""
+                # try to call the openai API. if it fails, try again. stop until 3 times
+                for _ in range(3):
+                    try:
+                        completion = openai.ChatCompletion.create(
                             model="gpt-3.5-turbo",
                             messages=agent_context,
                             temperature = temperatures[i],
                             n=1)
+                        break
+                    except:
+                        # wait for 10 seconds
+                        time.sleep(10)
+                        continue
+                
+                if completion == "":
+                    print("Failed to call the OpenAI API.")
 
                 assistant_message = construct_assistant_message(completion)
                 # print(assistant_message)

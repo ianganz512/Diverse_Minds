@@ -66,13 +66,13 @@ def parse_answer(input_str):
     return solution
 
 
-def compute_accuracy(gt, pred_solution):
+def compute_accuracy(gt, pred_solutions):
     answers = solve_math_problems(gt)
 
     if answers is None:
         return None
 
-    if type(pred_solution) == list:
+    if type(pred_solutions) == list:
         pred_answers = []
 
         for pred_solution in pred_solutions:
@@ -88,7 +88,7 @@ def compute_accuracy(gt, pred_solution):
         # print("pred answer: ", pred_answer)
         # pred_answer = pred_answers[0]
     else:
-        pred_answer = parse_answer(pred_solution)
+        pred_answer = parse_answer(pred_solutions)
         if pred_answer is None:
             pred_answer = solve_math_problems(pred_solution)
 
@@ -119,7 +119,7 @@ def most_frequent(List):
     return num
 
 if __name__ == "__main__":
-    response_dict = json.load(open("gsm_3_2_[0.4, 0.7, 1.0].json", "r"))
+    response_dict = json.load(open("./gsm_3_2_[0.7, 0.7, 0.7].json", "r"))
 
     questions = list(response_dict.keys())
 

@@ -68,7 +68,7 @@ def parse_answer(input_str):
     return solution
 
 
-def compute_accuracy(gt, pred_solution):
+def compute_accuracy(gt, pred_solutions):
     answers = solve_math_problems(gt)
 
     if answers is None:
@@ -90,7 +90,7 @@ def compute_accuracy(gt, pred_solution):
         # print("pred answer: ", pred_answer)
         # pred_answer = pred_answers[0]
     else:
-        print(pred_solution)
+        # print(pred_solution)
         pred_answer = parse_answer(pred_solution)
         if pred_answer is None:
             pred_answer = solve_math_problems(pred_solution)
